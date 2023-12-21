@@ -4,18 +4,16 @@ import axios from 'axios';
 
 function TableContent() {
     const [filesData, setFilesData] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const sortFiles = async () => {
         try {
-            // Exécuter l'API pour trier les fichiers
             const response = await axios.post('http://127.0.0.1:5000/sort_files', {
                 chemin_source: '/Users/damiengennevoise/Documents/M1 Paris 8/Technologies Web Internet/Projet2/mon-projet-react/tests',
                 chemin_destination: '/Users/damiengennevoise/Documents/M1 Paris 8/Technologies Web Internet/Projet2/mon-projet-react/tests'
             });
 
-            console.log(response.data);  // Afficher la réponse de l'API (message de succès)
-
-            // Rafraîchir les données après le tri
+            console.log(response.data);
             fetchData();
         } catch (error) {
             console.error('Erreur lors du tri des fichiers :', error);
@@ -24,11 +22,20 @@ function TableContent() {
 
     const fetchData = async () => {
         try {
-            // Exécuter l'API pour récupérer les données de la base de données
             const response = await axios.get('http://127.0.0.1:5000/api/get_files');
             setFilesData(response.data);
         } catch (error) {
             console.error('Erreur lors de la récupération des données de la base de données :', error);
+        }
+    };
+
+    const cleanDatabase = async () => {
+        try {
+            const response = await axios.post('http://127.0.0.1:5000/clean_database');
+            console.log(response.data);
+            fetchData();
+        } catch (error) {
+            console.error('Erreur lors du nettoyage de la base de données :', error);
         }
     };
 
@@ -51,15 +58,33 @@ function TableContent() {
         }
     };
 
+    const handleSearch = (event) => {
+        setSearchTerm(event.target.value);
+    };
+
+    const filteredFiles = filesData.filter((file) => {
+        return file.name.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+
     return (
         <div style={containerStyle}>
             <h2 style={headerStyle}>Contenu de la table</h2>
 
-            {/* Bouton pour trier les fichiers */}
-            <button style={buttonStyle} onClick={sortFiles}>Trier les fichiers</button>
+            <div>
+                <button style={buttonStyle} onClick={sortFiles}>Trier les fichiers</button>
+                <button style={cleanButtonStyle} onClick={cleanDatabase}>Nettoyer</button>
+            </div>
 
-            {/* Afficher les données récupérées de la base de données */}
-            {filesData.map((file, index) => (
+            {/* Barre de recherche */}
+            <input
+                type="text"
+                placeholder="Rechercher par nom de fichier"
+                value={searchTerm}
+                onChange={handleSearch}
+                style={searchBarStyle}
+            />
+
+            {filteredFiles.map((file, index) => (
                 <div key={index} style={{ ...fileStyle, backgroundColor: getColorByFileType(file.file_type) }}>
                     <p style={fileTitleStyle}>Nom: {file.name}</p>
                     <p>Taille: {file.size} Ko</p>
@@ -79,6 +104,17 @@ const buttonStyle = {
     border: 'none',
     borderRadius: '3px',
     cursor: 'pointer',
+    marginBottom: '10px',
+};
+
+const cleanButtonStyle = {
+    background: '#e74c3c',
+    color: '#fff',
+    padding: '10px 15px',
+    border: 'none',
+    borderRadius: '3px',
+    cursor: 'pointer',
+    marginLeft: '10px',
     marginBottom: '10px',
 };
 
@@ -110,6 +146,11 @@ const headerStyle = {
     textAlign: 'center',
     padding: '10px',
     marginBottom: '10px',
+};
+
+const searchBarStyle = {
+    margin: '10px 0',
+    padding: '5px',
 };
 
 export default TableContent;

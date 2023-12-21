@@ -16,27 +16,10 @@ class File(db.Model):
     file_type = db.Column(db.String(50))
     path = db.Column(db.String(255))
 
-def add_test_data():
-    File.query.delete()
-    test_data = [
-        {'name': 'test_file1.txt', 'size': 1024, 'file_type': 'texte', 'path': '/test_folder/test_file1.txt'},
-        {'name': 'test_file2.pdf', 'size': 2048, 'file_type': 'pdf', 'path': '/test_folder/test_file2.pdf'},
-        {'name': 'test_file3.png', 'size': 3072, 'file_type': 'image', 'path': '/test_folder/test_file3.png'},
-        {'name': 'test_file4.html', 'size': 4096, 'file_type': 'html', 'path': '/test_folder/test_file4.html'},
-        {'name': 'test_file5.txt', 'size': 5120, 'file_type': 'texte', 'path': '/test_folder/test_file5.txt'},
-    ]
-    for data in test_data:
-        file_data = File(**data)
-        db.session.add(file_data)
-    db.session.commit()
-
-with app.app_context():
-    db.create_all()
-    add_test_data()
-
 # Nouvelle route pour trier les fichiers
 @app.route('/sort_files', methods=['POST'])
 def sort_files():
+    File.query.delete()
     data = request.get_json()
     chemin_source = data.get('chemin_source')
     chemin_destination = data.get('chemin_destination')
@@ -89,14 +72,14 @@ def sort_files():
                 'name': fichier,
                 'size': os.path.getsize(chemin_fichier_destination),  # Utilisez le chemin destination
                 'file_type': dossier_destination,
-                'path': chemin_fichier_destination,
+                'path': chemin_fichier_source,
+
             }
             db.session.add(File(**file_data))
             db.session.commit()
 
     return jsonify({'message': 'Fichiers triés avec succès'}), 200
 
-# Reste du code...
 
 # Nouvelle route pour obtenir les données
 @app.route('/api/get_files', methods=['GET'])
@@ -105,5 +88,13 @@ def get_files():
     files_data = [{'name': file.name, 'size': file.size, 'file_type': file.file_type, 'path': file.path} for file in files]
     return jsonify(files_data)
 
+@app.route('/clean_database', methods=['POST'])
+def clean_database():
+    File.query.delete()
+    db.session.commit()
+    return jsonify({'message': 'Base de données nettoyée avec succès'}), 200
+
+
 if __name__ == '__main__':
     app.run(debug=True)
+
