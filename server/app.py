@@ -70,7 +70,7 @@ def sort_files():
 
             file_data = {
                 'name': fichier,
-                'size': os.path.getsize(chemin_fichier_destination),  # Utilisez le chemin destination
+                'size': os.path.getsize(chemin_fichier_destination),  # Utilise le chemin destination
                 'file_type': dossier_destination,
                 'path': chemin_fichier_source,
 

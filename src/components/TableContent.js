@@ -1,22 +1,49 @@
-// TableContent.js
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 function TableContent() {
     const [filesData, setFilesData] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    let [sourcePath, setSourcePath] = useState('');
+    const [destinationPath, setDestinationPath] = useState(''); // Aucune valeur par défaut
+    const [filteredFiles, setFilteredFiles] = useState([]);
 
     const sortFiles = async () => {
         try {
+            let finalDestinationPath;
+
+            if (destinationPath) {
+                // Si le chemin destination est spécifié, on l'utilise tel quel
+                finalDestinationPath = destinationPath;
+            } else {
+                // Sinon, valeur par défaut
+                finalDestinationPath = '/results';
+            }
+
+            if (!sourcePath) {
+                console.error('Le chemin source est vide.');
+                return;
+            }
+
+            // Concaténer le chemin de la source avec "/results"
+            finalDestinationPath = sourcePath + finalDestinationPath;
+
+            console.log("Chemin source:", sourcePath);
+            console.log("Chemin destination:", finalDestinationPath);
+
             const response = await axios.post('http://127.0.0.1:5000/sort_files', {
-                chemin_source: '/Users/damiengennevoise/Documents/M1 Paris 8/Technologies Web Internet/Projet2/mon-projet-react/tests',
-                chemin_destination: '/Users/damiengennevoise/Documents/M1 Paris 8/Technologies Web Internet/Projet2/mon-projet-react/tests'
+                chemin_source: sourcePath,
+                chemin_destination: finalDestinationPath,
             });
 
             console.log(response.data);
-            fetchData();
+
+            if (sourcePath) {
+                fetchData();
+            }
         } catch (error) {
             console.error('Erreur lors du tri des fichiers :', error);
+            console.log('Erreur détaillée Axios :', error.response);
         }
     };
 
@@ -24,6 +51,7 @@ function TableContent() {
         try {
             const response = await axios.get('http://127.0.0.1:5000/api/get_files');
             setFilesData(response.data);
+            filterFiles(response.data, searchTerm);
         } catch (error) {
             console.error('Erreur lors de la récupération des données de la base de données :', error);
         }
@@ -39,9 +67,14 @@ function TableContent() {
         }
     };
 
+    const handleSearch = (event) => {
+        setSearchTerm(event.target.value);
+        filterFiles(filesData, event.target.value);
+    };
+
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [searchTerm]);
 
     const getColorByFileType = (fileType) => {
         switch (fileType) {
@@ -58,21 +91,47 @@ function TableContent() {
         }
     };
 
-    const handleSearch = (event) => {
-        setSearchTerm(event.target.value);
+    const filterFiles = (data, term) => {
+        const filteredFiles = data.filter((file) => {
+            return file.name.toLowerCase().includes(term.toLowerCase());
+        });
+        setFilteredFiles(filteredFiles);
     };
-
-    const filteredFiles = filesData.filter((file) => {
-        return file.name.toLowerCase().includes(searchTerm.toLowerCase());
-    });
 
     return (
         <div style={containerStyle}>
             <h2 style={headerStyle}>Contenu de la table</h2>
 
+            <div style={inputContainerStyle}>
+                <div>
+                    <label>Chemin Source:</label>
+                    <input type="text" value={sourcePath} onChange={(e) => setSourcePath(e.target.value)} />
+                </div>
+                <div>
+                    <label>Chemin Destination:</label>
+                    <input type="text" value={destinationPath} onChange={(e) => setDestinationPath(e.target.value)} />
+                </div>
+            </div>
+
+            <p>
+                Plusieurs choix sont possibles :
+                <br></br>1) Vous renseignez un chemin de source et un chemin de destination.
+                <br></br>2) Vous renseignez seulement un chemin de source, et vous aurez automatiquement un dossier "results" avec le tri dedans.
+                <br></br>
+                <br></br>Cliquez sur le bouton "Nettoyer" pour vider la base de données.
+                <br></br>
+                <br></br>Vous pouvez rechercher un fichier directement à l'aide de la barre de recherche ci-dessous.
+                <br></br>
+                <br></br>Les fichiers pdf sont de couleur rouge, les fichiers texte de couleur bleue, les fichiers images en vert et les fichiers html en jaune.
+            </p>
+
             <div>
-                <button style={buttonStyle} onClick={sortFiles}>Trier les fichiers</button>
-                <button style={cleanButtonStyle} onClick={cleanDatabase}>Nettoyer</button>
+                <button style={buttonStyle} onClick={sortFiles}>
+                    Trier les fichiers
+                </button>
+                <button style={cleanButtonStyle} onClick={cleanDatabase}>
+                    Nettoyer
+                </button>
             </div>
 
             {/* Barre de recherche */}
@@ -150,7 +209,14 @@ const headerStyle = {
 
 const searchBarStyle = {
     margin: '10px 0',
-    padding: '5px',
+    padding: '10px',
+    width: '23%',
+};
+
+const inputContainerStyle = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: '10px',
 };
 
 export default TableContent;
