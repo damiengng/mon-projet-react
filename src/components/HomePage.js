@@ -12,12 +12,10 @@ function HomePage() {
                 </p>
             </header>
             <div style={contentStyle}>
-                <h2>Bienvenue sur la page d'accueil!</h2>
-                <p>
-                    Bienvenue sur notre application de tri de fichiers. Utilisez le bouton ci-dessous pour trier les fichiers dans le répertoire spécifié.
-                </p>
+                <h2>Bienvenue sur notre application de tri de fichiers.</h2>
+
             </div>
-        </div>
+        </div >
     );
 }
 
